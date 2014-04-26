@@ -80,10 +80,10 @@
     <ClCompile Include="SerialPort.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ArduinoApplication\NotePackets.h" />
     <ClInclude Include="..\ArduinoApplication\UnitStatus.h" />
-    <ClInclude Include="..\Arduino\Enums.h" />
+    <ClInclude Include="Enums.h" />
     <ClInclude Include="MessagePrinting.h" />
+    <ClInclude Include="NotePackets.h" />
     <ClInclude Include="SerialPort.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

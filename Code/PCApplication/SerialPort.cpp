@@ -1,4 +1,5 @@
 #include "SerialPort.h"
+#include "NotePackets.h"
 using namespace CustomSerial;
 
 SerialPort::SerialPort() : h(INVALID_HANDLE_VALUE)
@@ -75,45 +76,23 @@ int SerialPort::Setup(unsigned int Baudrate)
 
 }
 
-int SerialPort::ReadMessage(UnitStatus& msg)
-{
-	DWORD bytesRead;
-
-	// Find message size
-	unsigned int numBytes = sizeof(UnitStatus);
-	char *data = new char[numBytes];
-
-	int status = ALL_OK;
-	if (ReadFile(h, data, numBytes, &bytesRead, NULL) != 0)
-	{
-		if ((unsigned int)bytesRead == numBytes)
-			memcpy(&msg, data, (size_t)bytesRead);
-		else
-			status = READ_MESSAGE_SIZE_MISMATCH;
-	}
-	else
-		status = READ_FAILED_TO_GET_MESSAGE;
-
-	delete[] data;
-	return status;
-}
-
 int SerialPort::ReadMessage(unsigned char& cmd, unsigned char& chl, unsigned char * param)
 {
 	DWORD bytesRead;
 
 	if (ReadFile(h, &cmd, 1, &bytesRead, NULL) != 0)
 	{
-		chl = cmd & 0x0F;
-		cmd = ((cmd & 0xF0) - 0x0F) >> 4;
+		
+		chl = IVCLaserOrgan::MIDI_Messages::getChannel(cmd);
+		cmd = IVCLaserOrgan::MIDI_Messages::getIntCode(cmd);
 	}
 	else
 		return READ_NO_MESSAGE_AVAILABLE;
 
-	MIDI_MessageType msg = MIDI_MessageDefinitions[cmd];
-	if (ReadFile(h, param, msg.params, &bytesRead, NULL) != 0)
+	unsigned short NumParams = IVCLaserOrgan::MIDI_Messages::getNumberOfParameters(cmd);
+	if (ReadFile(h, param, NumParams, &bytesRead, NULL) != 0)
 	{
-		if (bytesRead != msg.params)
+		if (bytesRead != NumParams)
 			return READ_MESSAGE_SIZE_MISMATCH;
 	}
 	else
@@ -122,30 +101,47 @@ int SerialPort::ReadMessage(unsigned char& cmd, unsigned char& chl, unsigned cha
 	return ALL_OK;
 }
 
+
+int SerialPort::ReadRaw(unsigned char* data, unsigned int size, unsigned int * bytesRead)
+{
+	DWORD intBytesRead;
+	SERIAL_ErrorCodes code;
+
+	if (ReadFile(h, data, size, &intBytesRead, NULL) != 0)
+		code = ALL_OK;
+	else
+		code = READ_NO_MESSAGE_AVAILABLE;
+
+	if (bytesRead != NULL)
+		*bytesRead = (unsigned int)intBytesRead;
+
+	return code;
+}
+
 int SerialPort::WriteMessage(const unsigned char cmd, const unsigned char chl, const unsigned char * param)
 {
 	// Find message type
-	if (cmd < 0 || cmd >= NUMBER_OF_MESSAGE_ENUMS)
-		return UNKNOWN_COMMAND;
-	MIDI_MessageType msg = MIDI_MessageDefinitions[cmd];
+	if (cmd < 0 || cmd >= IVCLaserOrgan::NUMBER_OF_MESSAGE_ENUMS)
+		return IVCLaserOrgan::UNKNOWN_COMMAND;
 
 	// Generate data structure for message
-	unsigned char * outData = new unsigned char[msg.params + 1];
+	unsigned short NumParams = IVCLaserOrgan::MIDI_Messages::getNumberOfParameters(cmd);
+	unsigned char * outData = new unsigned char[NumParams + 1];
 
 	// Create the MIDI_Message
 	if (chl < CHANNEL_START || chl > CHANNEL_END)
-		return CHANNEL_ERROR;
-	outData[0] = msg.command + chl;
+		return IVCLaserOrgan::CHANNEL_ERROR;
+	outData[0] = IVCLaserOrgan::MIDI_Messages::getHexCode(cmd) + chl;
 
-	for (int index = 0; index < msg.params; index++)
+	for (int index = 0; index < NumParams; index++)
 	{
 		if (param[index] < DATA_BYTES_START || param[index] > DATA_BYTES_END)
-			return PARAMETER_ONE_ERROR + index;
+			return IVCLaserOrgan::PARAMETER_ONE_ERROR + index;
 		outData[1 + index] = param[index];
 	}
 
 	// Write to serial
-	int writeStatus = WriteRaw(outData, sizeof(msg.params + 1));
+	int writeStatus = WriteRaw(outData, sizeof(NumParams + 1));
 
 	// Free dynamic memory
 	delete[] outData;

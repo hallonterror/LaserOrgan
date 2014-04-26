@@ -29,13 +29,13 @@
     <ClInclude Include="MessagePrinting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Arduino\Enums.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ArduinoApplication\NotePackets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ArduinoApplication\UnitStatus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NotePackets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Enums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
