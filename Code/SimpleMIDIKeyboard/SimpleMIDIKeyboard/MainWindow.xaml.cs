@@ -20,10 +20,15 @@ namespace SimpleMIDIKeyboard
         {
             InitializeComponent();
 
-            SetupSerial("COM15", 115200);
+            SetupSerial();
             CreateButtonLayout();
         }
     
+        private void Log(String message)
+        {
+            InfoList.Items.Add(message);
+            InfoList.ScrollIntoView(InfoList.Items[InfoList.Items.Count - 1]);
+        }
 
         private void CreateButtonLayout()
         {
@@ -50,21 +55,46 @@ namespace SimpleMIDIKeyboard
             }
         }
 
-        private void SetupSerial(String port, int baud)
+        private void SetupSerial()
         {
+            String[] ports = SerialPort.GetPortNames();
+            foreach (String port in ports)
+                COMPortSelector.Items.Add(port);
+
+            int[] baudrates = { 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 31250, 38400, 57600, 115200 };
+            foreach (int baud in baudrates)
+                BaudRateSelector.Items.Add(baud);
+
+            // Select last available COM port as default
+            COMPortSelector.SelectedIndex = 0;
+
+            // Select maximum baud rate as default
+            BaudRateSelector.SelectedIndex = BaudRateSelector.Items.Count - 1;
+        }
+
+        private void ConnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (serial != null && serial.IsOpen)
+            {
+                Log("Disconnecting previous connection.");
+                serial.Close();
+            }
+            String port = COMPortSelector.SelectedItem as String;
+            int baud = Convert.ToInt32(BaudRateSelector.SelectedItem);
             try
             {
                 serial = new SerialPort(port, baud);
                 serial.DataReceived += Serial_DataReceived;
                 serial.Open();
+                Log("Successfull connection to " + port);
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                InfoList.Items.Add("Failed to open serial port. Reason: ");
-                InfoList.Items.Add(ex.Message.ToString());
-                InfoList.ScrollIntoView(InfoList.Items[InfoList.Items.Count - 1]);
+                Log("Failed to open serial port. Reason:\n" + ex.Message.ToString());
             }
         }
+
 
         private void Serial_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -101,9 +131,7 @@ namespace SimpleMIDIKeyboard
             }
             catch (Exception ex)
             {
-                InfoList.Items.Add("Failed to write to serial port. Reason: ");
-                InfoList.Items.Add(ex.Message.ToString());
-                InfoList.ScrollIntoView(InfoList.Items[InfoList.Items.Count - 1]);
+                Log("Failed to open serial port. Reason:\n" + ex.Message.ToString());
             }
             CurrentButtons++;
         }
@@ -123,9 +151,7 @@ namespace SimpleMIDIKeyboard
             }
             catch (Exception ex)
             {
-                InfoList.Items.Add("Failed to write to serial port. Reason: ");
-                InfoList.Items.Add(ex.Message.ToString());
-                InfoList.ScrollIntoView(InfoList.Items[InfoList.Items.Count - 1]);
+                Log("Failed to open serial port. Reason:\n" + ex.Message.ToString());
             }
             CurrentButtons--;
         }

@@ -7,7 +7,23 @@
         mc:Ignorable="d"
         Title="MIDI Tester" Height="600" Width="800">
     <DockPanel>
-        <ListView DockPanel.Dock="Right" x:Name="InfoList" Width="220" />
+        <Grid DockPanel.Dock="Right" Width="200">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="COMPortSelector" Grid.Row="0" />
+            <ComboBox x:Name="BaudRateSelector" Grid.Row="0" Grid.Column="1" />
+            <Button x:Name="RefreshCOMPortsButton" Grid.Row="2" Content="Refresh" />
+            <Button x:Name="ConnectButton" Grid.Row="2" Grid.Column="1" Content="Connect..." Click="ConnectButton_Click"/>
+            <ListView x:Name="InfoList" Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        </Grid>
         <Grid x:Name="ButtonGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
